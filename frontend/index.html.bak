@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>CreditIQ — Pre-CIBIL Score</title>
+  <meta name="description" content="Generate your Pre-CIBIL Score instantly from your bank statement. Get custom personalized advice." />
+  <meta name="theme-color" content="#16a34a" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo" onclick="goHome()">
+      <div class="logo-box">C</div>CreditIQ
+    </div>
+    <div class="nav-right">
+      <span class="badge" id="nav-badge" style="display:none"></span>
+      <button class="btn btn-outline" id="nav-back" style="display:none" onclick="goHome()">← New Analysis</button>
+    </div>
+  </nav>
+
+  <!-- ═══════ HOME ═══════ -->
+  <div id="home-pg">
+
+    <div class="hero">
+
+      <h2><b>Generate Your<br /></b></h2><h1><em>Pre-CIBIL Score</em><br />From Bank Statement</h1>
+      <p>Upload your last 18+ months bank statement. Get instant 0–100 score with personalised advice.</p>
+    </div>
+
+    <!-- UPLOAD ZONE -->
+    <div class="upload-wrap">
+
+      <div class="drop-zone" id="drop-zone"
+        ondragover="event.preventDefault();event.target.closest('.drop-zone').classList.add('drag')"
+        ondragleave="event.target.closest('.drop-zone')?.classList.remove('drag')" ondrop="handleDrop(event)">
+        <div class="drop-icon">📂</div>
+        <div class="drop-title">Drop your bank statement here</div>
+        <div class="drop-sub">CSV, Excel, or PDF · Last 18+ months of transactions</div>
+        <div class="format-tags">
+          <span class="fmt-tag">📋 CSV</span>
+          <span class="fmt-tag">📊 Excel</span>
+          <span class="fmt-tag">📄 PDF</span>
+        </div>
+        <button class="btn btn-green" type="button"
+          onclick="event.stopPropagation();document.getElementById('csv-file').click()">
+          Upload File
+        </button>
+      </div>
+
+      <input type="file" id="csv-file" accept=".csv,.xlsx,.xls,.pdf" style="display:none"
+        onchange="handleFileSelect(event)" />
+
+      <!-- File status -->
+      <div class="file-status">
+
+        <!-- Success state -->
+        <div class="fbox fbox-ok" id="fbox-ok">
+          <div class="frow"><span id="fval-icon">📋</span> &nbsp;<span id="fval-name">—</span></div>
+          <div class="frow">✅ &nbsp;<span id="fval-count">0</span> transactions found</div>
+          <div class="frow">📅 &nbsp;Period: <strong id="fval-period">—</strong></div>
+          <div class="frow">🔍 &nbsp;Columns detected: <strong id="fval-cols">—</strong></div>
+        </div>
+
+        <!-- Processing state -->
+        <div class="fbox fbox-info" id="fbox-proc">
+          <div class="proc-steps">
+            <div class="proc-step" id="ps-upload">
+              <div class="proc-dot"></div><span>Uploading file…</span>
+            </div>
+            <div class="proc-step" id="ps-convert">
+              <div class="proc-dot"></div><span>Converting & detecting columns…</span>
+            </div>
+            <div class="proc-step" id="ps-analyze">
+              <div class="proc-dot"></div><span>Running ML analysis…</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error state -->
+        <div class="fbox fbox-err" id="fbox-err" id="fbox-err"></div>
+
+        <!-- Analyze button — shown after valid file -->
+        <div class="analyze-wrap" id="analyze-wrap">
+          <button class="btn btn-green" id="analyze-btn" onclick="runAnalysis()">
+            <span id="analyze-txt">🔍 Analyse My Statement</span>
+          </button>
+        </div>
+      </div>
+
+      <details class="smart-guide">
+        <summary>🧠 How does smart column detection work?</summary>
+        <div class="smart-guide-body">
+          CreditIQ uses <b>content-based analysis</b> — it scans your data to automatically identify:
+          <br />• <b>Date columns</b> by recognizing date patterns (DD/MM/YYYY, YYYY-MM-DD, etc.)
+          <br />• <b>Description</b> columns by finding the longest text fields
+          <br />• <b>Amount columns</b> by detecting numeric values, debit/credit patterns
+          <br />• <b>Balance columns</b> by identifying running totals
+          <br /><br />No specific column names required — works with any bank format, any language.
+        </div>
+      </details>
+    </div>
+
+    <!-- DEMO ACCOUNTS -->
+    <div class="demo-section">
+      <div class="divider"><span>Or try a demo profile</span></div>
+      <div class="demo-row" id="demo-row">
+        <div style="font-size:13px;color:var(--gray400);padding:8px">Loading demos…</div>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="how">
+      <div class="how-inner">
+        <h2>How It Works</h2>
+        <p>No credit bureau needed — 18+ months of transaction intelligence.</p>
+        <div class="how-steps">
+          <div class="step">
+            <div class="num">1</div>
+            <h3>Upload Statement</h3>
+            <p>Export your bank statement as CSV, Excel, or PDF. Minimum 18 months for accurate scoring.</p>
+          </div>
+          <div class="step">
+            <div class="num">2</div>
+            <h3>ML Analysis</h3>
+            <p>Our model categorises every transaction across 20+ financial categories with about 99% accuracy.</p>
+          </div>
+          <div class="step">
+            <div class="num">3</div>
+            <h3>Your Score</h3>
+            <p>Get 0–100 pre-CIBIL score with personalised DO's, DON'Ts, loan eligibility and other insights.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /home-pg -->
+  <!-- Footer -->
+  <footer class="site-footer">
+    <strong>CreditIQ</strong> — Pre-CIBIL Score Generation Platform &middot; Created by team Six_seven &middot; GSA Hackathon 2026
+  </footer>
+
+  <!-- ═══════ SCORE PAGE ═══════ -->
+  <div id="score-pg">
+    <div class="wrap">
+
+      <div class="err-box" id="err-box">
+        <h4>⚠ Display Error — Server returned data but rendering failed</h4>
+        <pre id="err-msg-pre"></pre>
+        <button class="btn btn-ghost" style="margin-top:10px;font-size:13px" onclick="goHome()">← Go Back</button>
+      </div>
+
+      <!-- Page header -->
+      <div class="page-hdr">
+        <button class="btn btn-ghost" onclick="goHome()">← Back</button>
+        <h2 id="ph-name">—</h2>
+        <span class="pacc" id="ph-acc">—</span>
+        <span class="pper" id="ph-per">—</span>
+        <span style="font-size:13px;color:var(--gray400)" id="ph-txns"></span>
+      </div>
+
+      <!-- SCORE HERO -->
+      <div class="score-hero">
+
+        <!-- Gauge card -->
+        <div class="card gauge-card">
+          <canvas id="cv-gauge" width="210" height="112"></canvas>
+          <div class="g-num" id="d-score" style="color:var(--g600)">—</div>
+          <div class="g-of">out of 100</div>
+          <div class="g-grade" id="d-grade" style="color:var(--g600)">—</div>
+          <div class="g-pct" id="d-pct">—</div>
+          <div class="g-risk" id="d-risk">—</div>
+          <div class="bands" id="d-bands"></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="card cp">
+          <div class="sec-head">Financial Snapshot</div>
+          <div class="g3" id="stats" style="gap:12px"></div>
+        </div>
+
+        <!-- Interpretation -->
+        <div class="card icard" id="icard">
+          <div class="ititle" id="ititle">—</div>
+          <div class="idesc" id="idesc">—</div>
+          <div class="inext">
+            <b>💡 What to do next</b>
+            <span id="inext">—</span>
+          </div>
+        </div>
+
+      </div><!-- /score-hero -->
+
+      <!-- RECOMMENDATIONS -->
+      <div class="card cp" style="margin-bottom:18px">
+        <div class="sec-head">Personalised DO's &amp; DON'Ts</div>
+        <div class="rec-grid">
+          <div>
+            <div class="rch" style="color:var(--g600)">✅ DO These</div>
+            <div id="rec-do"></div>
+          </div>
+          <div>
+            <div class="rch" style="color:var(--red)">🚫 DON'T Do These</div>
+            <div id="rec-dont"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPONENTS + RADAR -->
+      <div class="g2" style="margin-bottom:18px">
+        <div class="card cp">
+          <div class="sec-head">Score Components</div>
+          <div id="comp-list"></div>
+        </div>
+        <div class="card cp">
+          <div class="sec-head">Radar Chart</div>
+          <canvas id="cv-radar" width="300" height="260" style="display:block;margin:0 auto"></canvas>
+        </div>
+      </div>
+
+      <!-- MONTHLY CHART -->
+      <div class="card cp" style="margin-bottom:18px">
+        <div class="sec-head">Monthwise Income vs Expense</div>
+        <div class="ch-wrap"><canvas id="cv-monthly"></canvas></div>
+      </div>
+
+      <!-- CATEGORY + LOANS -->
+      <div class="g2" style="margin-bottom:18px">
+        <div class="card cp">
+          <div class="sec-head">Spending Breakdown</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+            <canvas id="cv-donut" width="170" height="170" style="flex-shrink:0"></canvas>
+            <div id="cat-list" style="flex:1;min-width:150px"></div>
+          </div>
+        </div>
+        <div class="card cp">
+          <div class="sec-head">Loan Eligibility</div>
+          <div id="loan-list"></div>
+        </div>
+      </div>
+
+      <!-- WHAT-IF -->
+      <div class="card cp" style="margin-bottom:18px">
+        <div class="sec-head">What-If Score Simulator</div>
+        <div class="wi-layout">
+          <div>
+            <div class="sg">
+              <div class="sg-label"><span>On-Time Payment Rate</span>
+                <span class="sg-val" id="wv1">90%</span>
+              </div>
+              <input type="range" id="ws1" min="0" max="100" value="90"
+                oninput="wv1.textContent=this.value+'%';scheduleWI()" />
+            </div>
+            <div class="sg">
+              <div class="sg-label"><span>Monthly SIP Investment</span>
+                <span class="sg-val" id="wv2">₹0</span>
+              </div>
+              <input type="range" id="ws2" min="0" max="20000" step="500" value="0"
+                oninput="wv2.textContent='₹'+Number(this.value).toLocaleString('en-IN');scheduleWI()" />
+            </div>
+            <div class="sg">
+              <div class="sg-label"><span>Savings Rate</span>
+                <span class="sg-val" id="wv3">20%</span>
+              </div>
+              <input type="range" id="ws3" min="0" max="50" value="20" oninput="wv3.textContent=this.value+'%'" />
+            </div>
+            <button class="btn btn-ghost" style="font-size:13px" onclick="resetWI()">Reset</button>
+          </div>
+          <div class="wi-result">
+            <div style="font-size:11px;font-weight:700;color:var(--gray400);letter-spacing:.07em">PROJECTED SCORE</div>
+            <div class="wi-big" id="wi-s" style="color:var(--g600);margin-top:4px">—</div>
+            <div style="font-size:13px;color:var(--gray400)">/ 100</div>
+            <div class="wi-delta" id="wi-d"></div>
+            <div style="font-size:13px;color:var(--gray500);margin-top:3px" id="wi-g"></div>
+            <div class="wi-msg" id="wi-m">Adjust sliders to simulate</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSACTION TABLE -->
+      <div class="card cp">
+        <div class="sec-head">Transaction History</div>
+        <div class="tbl-filters">
+          <input class="finp" id="tf-q" placeholder="Search…" oninput="filterT()" style="flex:1;max-width:210px" />
+          <select class="finp" id="tf-cat" onchange="filterT()" style="max-width:180px">
+            <option value="">All Categories</option>
+          </select>
+          <select class="finp" id="tf-typ" onchange="filterT()" style="max-width:130px">
+            <option value="">All</option>
+            <option value="CREDIT">Credits</option>
+            <option value="DEBIT">Debits</option>
+          </select>
+          <button class="btn btn-outline" style="font-size:13px;padding:8px 13px" onclick="exportCSV()">⬇ CSV</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="pg-wrap" id="pg-wrap"></div>
+        <div class="tbl-info" id="tbl-info"></div>
+      </div>
+
+    </div><!-- /wrap -->
+  </div><!-- /score-pg -->
+
+  <script src="/static/script.js" defer></script>
+</body>
+
+</html>
