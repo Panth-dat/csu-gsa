@@ -39,6 +39,8 @@ class WhatIfReq(BaseModel):
     account_number: str
     on_time_rate: Optional[float] = None
     has_sip: Optional[bool] = None
+    transactions: Optional[List[dict]] = None
+
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 def _is_credit(t: dict) -> bool:
@@ -824,15 +826,28 @@ async def upload_file(file: UploadFile = File(...)):
 @app.post("/api/whatif")
 def what_if(req: WhatIfReq):
     try:
-        key  = f"{req.account_number}:18"
-        data = _cache.get(key) or generate_transactions(req.account_number.strip().upper(), 18)
-        txns = data["transactions"]
+        # If the frontend passes transactions (e.g., from an uploaded file or demo), use them.
+        if req.transactions and len(req.transactions) > 0:
+            txns = req.transactions
+            # Normalize keys: frontend sends 'is_late', backend expects 'is_late_payment'
+            for t in txns:
+                if "is_late" in t and "is_late_payment" not in t:
+                    t["is_late_payment"] = t["is_late"]
+        else:
+            # Fallback for old clients: load the generated demo transactions
+            key  = f"{req.account_number}:18"
+            data = _cache.get(key) or generate_transactions(req.account_number.strip().upper(), 18)
+            txns = data["transactions"]
+            
         base = predict_cibil(txns)
         import random; rng = random.Random(42)
         modified = []
         for t in txns:
             m = dict(t)
-            if req.on_time_rate is not None and _is_late(t):
+            # Apply on_time_rate logic to ALL bill/loan payments so the score can accurately rise or drop.
+            if req.on_time_rate is not None and m.get("category", "") in ("BILL_PAYMENT", "EMI_LOAN", "RENT", "INSURANCE"):
+                # req.on_time_rate is 0.0 to 1.0. 
+                # e.g., if on_time_rate is 0.90, there's a 10% chance a bill gets marked late
                 m["is_late_payment"] = not (rng.random() < req.on_time_rate)
             modified.append(m)
         if req.has_sip:

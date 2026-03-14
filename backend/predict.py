@@ -39,9 +39,56 @@ def _load():
         _models["fc"]   = joblib.load(fc_path) if fc_path.exists() else FEATURE_COLS
 
 
+# ─── Heuristic Keyword Rules for Categorization ───────────────────────────────
+CATEGORY_RULES = {
+    "GROCERY": ["SUPERMARKET", "MART", "STORE", "KIRANA", "BASKET", "GROCERY", "RELIANCE SMART", "DMART", "BLINKIT", "ZEPTO", "SPENCER", "NILGIRI", "NATURES BASKET"],
+    "FOOD_DINING": ["ZOMATO", "SWIGGY", "MCDONALD", "DOMINO", "PIZZA", "STARBUCKS", "CAFE", "COFFEE", "KFC", "BARBEQUE", "PARADISE", "RESTAURANT", "EATERY", "BAKERY"],
+    "EMI_LOAN": ["LOAN", "FINSER", "FINANCE", "CAPITAL", "MUTHOOT", "MANAPPURAM"],
+    "HEALTHCARE": ["HOSPITAL", "PHARMACY", "CLINIC", "MEDICAL", "DIAGNOSTIC", "NETMEDS", "1MG", "PHARMEASY", "APOLLO", "MANIPAL", "MEDPLUS", "HEALTHCARE"],
+    "SHOPPING": ["MYNTRA", "AMAZON SELLER", "FLIPKART", "NYKAA", "AJIO", "LIFESTYLE", "SHOPPER", "ZARA", "RETAIL", "APPAREL", "CLOTHING"],
+    "BILL_PAYMENT": ["BESCOM", "POWER", "GAS", "WATER", "BROADBAND", "POSTPAID", "ELECTRICITY", "BILL", "FIBER"],
+    "RECHARGE": ["RECHARGE", "PREPAID", "DTH", "TATA PLAY", "DISH TV"],
+    "TRANSPORT": ["OLA", "UBER", "RAPIDO", "PETROL", "FUEL", "INDIAN OIL", "BHARAT PETROLEUM", "HPCL", "IRCTC", "MAKEMYTRIP", "AIRLINE", "TRAVEL", "METRO"],
+    "SIP": ["COIN", "MUTUAL FUND", "AMC", "SIP"],
+    "STOCKS": ["ZERODHA", "GROWW", "UPSTOX", "ANGEL ONE", "SECURITIES", "BROKING", "SHAREKHAN"],
+    "INSURANCE": ["INSURANCE", "LIC ", "LIFE", "PRUDENTIAL", "ACKO"],
+    "EDUCATION": ["BYJU", "UNACADEMY", "COURSERA", "UDEMY", "FIITJEE", "ALLEN", "SCHOOL", "COLLEGE", "INSTITUTE", "EDUCATION", "TUTION"],
+    "ENTERTAINMENT": ["NETFLIX", "PRIME VIDEO", "AMAZON PRIME", "HOTSTAR", "SONY LIV", "ZEE5", "BOOKMYSHOW", "CINEMA", "PVR", "INOX", "SPOTIFY"],
+    "SALARY": ["SALARY", "PAYROLL"],
+    "ATM_WITHDRAWAL": ["ATM WDL", "CASH WITH", "ATM CASH"],
+    "RENT": ["RENT"],
+    "TAX": ["INCOME TAX", "GST", "PROPERTY TAX", "TAX P", "TDS"],
+    "UPI_TRANSFER": ["UPI/", "PHONEPE/", "GPAY/", "PAYTM/"],
+    "CASHBACK_REFUND": ["CASHBACK", "REFUND"],
+    "INTEREST_DIVIDEND": ["INTEREST", "DIVIDEND"]
+}
+
 def predict_category(description: str) -> str:
+    desc_up = description.upper()
+    
+    # 1. First Pass: Hardcoded Keyword Rules
+    # Sort categories to prioritize specific ones (like UPI transfers)
+    # Check for UPI first to catch pure transfers, but if there's a specific merchant inside the UPI string,
+    # the merchant rule should ideally fire. However, the current logic is simple.
+    
+    # Actually, we want to extract the merchant from UPI strings if possible
+    # e.g., "UPI/ZOMATO/123" -> check "ZOMATO"
+    
+    # Check rules
+    for category, keywords in CATEGORY_RULES.items():
+        if category == "UPI_TRANSFER": continue # handle below
+        for keyword in keywords:
+            if keyword in desc_up:
+                return category
+                
+    # If no specific merchant matched, but it has UPI/PhonePe prefix, it's a transfer
+    for keyword in CATEGORY_RULES["UPI_TRANSFER"]:
+        if keyword in desc_up:
+            return "UPI_TRANSFER"
+
+    # 2. Fallback: ML Model
     _load()
-    vec  = _models["vec"].transform([description.upper()])
+    vec  = _models["vec"].transform([desc_up])
     pred = _models["cat"].predict(vec)
     return _models["le"].inverse_transform(pred)[0]
 

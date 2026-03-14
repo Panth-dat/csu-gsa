@@ -681,7 +681,8 @@
             body: JSON.stringify({
               account_number: DATA.account_number,
               on_time_rate: parseFloat(id('ws1').value) / 100,
-              has_sip: parseFloat(id('ws2').value) > 0
+              has_sip: parseFloat(id('ws2').value) > 0,
+              transactions: ALL_TXNS
             })
           });
           const d = await r.json();
